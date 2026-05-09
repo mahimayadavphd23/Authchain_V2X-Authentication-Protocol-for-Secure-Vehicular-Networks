@@ -1,0 +1,25 @@
+# Requirements for AuthChain-V2X Formal Verification
+
+# Verification Tool
+Scyther v1.1.3
+
+# Protocol Description Language
+SPDL (Security Protocol Description Language)
+
+# Required Python Environment
+Python 2.7.18 (64-bit)
+
+# Required GUI Library
+wxPython 2.8.12.1 for Python 2.7 (64-bit Unicode build)
+
+# Additional Dependency
+Graphviz (stable Windows 10 x64 release)
+
+# Supported Operating System
+Windows 10 / Windows 11 (64-bit)
+
+# Verification Model
+Dolev-Yao symbolic adversary model
+
+# Protocol File
+AuthChain_V2X.spdl
