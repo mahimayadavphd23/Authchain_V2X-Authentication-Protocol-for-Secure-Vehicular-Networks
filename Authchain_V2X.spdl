@@ -1,0 +1,148 @@
+/* =========================================================
+   TYPE DECLARATIONS
+   ========================================================= */
+
+usertype Nonce;
+usertype SessionKey;
+usertype Ephemeral;
+
+/* =========================================================
+   LONG-TERM KEYS
+   ========================================================= */
+
+secret skX1;  secret pkX1;  inversekeys(skX1, pkX1);
+secret skX2;  secret pkX2;  inversekeys(skX2, pkX2);
+
+/* =========================================================
+   CRYPTOGRAPHIC FUNCTIONS
+   ========================================================= */
+
+hashfunction h;
+
+/* =========================================================
+   PROTOCOL DEFINITION
+   ========================================================= */
+
+protocol AuthChain-V2X(X1, X2, BC)
+{
+
+  /* ================= V2X NODE X1 ================= */
+  role X1
+  {
+    fresh N1 : Nonce;
+    fresh N3 : Nonce;
+    fresh N5 : Nonce;
+    fresh N6 : Nonce;
+
+
+    fresh E1 : Ephemeral;
+
+    var   N2    : Nonce;
+    var   E2    : Ephemeral;
+    var   SK-BC : SessionKey;
+    var   SK    : SessionKey;
+
+    /* authenticate to BC */
+    send_1(X1, BC, {X1, N1}skX1);
+
+    /* receive session from BC (initialises SK) */
+    recv_2(BC, X1, {X2, SK-BC, SK, N2}pkX1);
+
+    /* ephemeral exchange bound to BC session */
+    send_3(X1, X2, {X1, E1, N1, N2, SK}skX1);
+    recv_4(X2, X1, {X2, E2, N1, N2, SK}skX2);
+
+    /* receive X2 acknowledgement including its ephemeral */
+recv_7(X2, X1, {X2, E2, N1, N2, SK}skX2);
+
+/* confirm back to X2 that E2 is accepted in this session */
+send_12(X1, X2, {X1, E1, E2, N1, N2, SK}skX1);
+
+/* now both sides are synchronised on same BC session */
+claim(X1, Running, X2, h(X1, X2, SK, N1, N2));
+
+    /* SK-protected phase */
+    send_5(X1, X2, {X1, N3, h(X1, X2, SK, N1, N2)}SK);
+    recv_6(X2, X1, {X2, N3, h(X1, X2, SK, N1, N2)}SK);
+    recv_8(X2, X1, {X2, N5, h(X1, X2, SK, N1, N2)}SK);
+    //send_11(X1, X2, {X1, N5, h(X1, X2, SK, N1, N2)}SK);
+    send_11(X1, X2, {X1, N5, N6, h(X1, X2, SK, N1, N2, N6)}SK);
+
+
+
+    /* Claims */
+    claim(X1, Alive);
+    claim(X1, Weakagree, X2);
+    claim(X1, Niagree);
+    claim(X1, Nisynch);
+    claim(X1, Commit, X2, h(X1, X2, SK, N1, N2));
+    claim(X1, Secret, SK);
+  }
+
+  /* ================= V2X NODE X2 ================= */
+  role X2
+  {
+    fresh N2 : Nonce;
+    fresh N5 : Nonce;
+
+    fresh E2 : Ephemeral;
+
+    var   N1    : Nonce;
+    var   N3    : Nonce;
+    var   E1    : Ephemeral;
+    var   SK-BC : SessionKey;
+    var   SK    : SessionKey;
+
+    /* authenticate to BC */
+    send_9(X2, BC, {X2, N2}skX2);
+
+    /* receive session from BC (initialises SK) */
+    recv_10(BC, X2, {X1, SK-BC, SK, N1}pkX2);
+
+    /* ephemeral exchange bound to BC session */
+    recv_3(X1, X2, {X1, E1, N1, N2, SK}skX1);
+    send_4(X2, X1, {X2, E2, N1, N2, SK}skX2);
+
+    //* acknowledgement that also binds E2 and SK */
+send_7(X2, X1, {X2, E2, N1, N2, SK}skX2);
+
+/* wait for X1 confirmation that it received E2 */
+recv_12(X1, X2, {X1, E1, E2, N1, N2, SK}skX1);
+
+claim(X2, Running, X1, h(X1, X2, SK, N1, N2));
+
+
+    /* SK-protected phase */
+    recv_5(X1, X2, {X1, N3, h(X1, X2, SK, N1, N2)}SK);
+    send_6(X2, X1, {X2, N3, h(X1, X2, SK, N1, N2)}SK);
+    send_8(X2, X1, {X2, N5, h(X1, X2, SK, N1, N2)}SK);
+    //recv_11(X1, X2, {X1, N5, h(X1, X2, SK, N1, N2)}SK);
+    var N6 : Nonce;
+    recv_11(X1, X2, {X1, N5, N6, h(X1, X2, SK, N1, N2, N6)}SK);
+
+    /* Claims */
+    claim(X2, Alive);
+    claim(X2, Weakagree, X1);
+    claim(X2, Niagree);
+    claim(X2, Nisynch);
+    claim(X2, Commit, X1, h(X1, X2, SK, N1, N2));
+    claim(X2, Secret, SK);
+  }
+
+  /* ================= BLOCKCHAIN ================= */
+  role BC
+  {
+    var N1, N2 : Nonce;
+    fresh SK-BC : SessionKey;
+    fresh SK    : SessionKey;
+
+    recv_1(X1, BC, {X1, N1}skX1);
+    recv_9(X2, BC, {X2, N2}skX2);
+
+    send_2(BC, X1, {X2, SK-BC, SK, N2}pkX1);
+    send_10(BC, X2, {X1, SK-BC, SK, N1}pkX2);
+
+    claim(BC, Alive);
+  }
+}
+
