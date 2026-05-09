@@ -1,0 +1,44 @@
+Scyther Configuration for AuthChain-V2X Formal Verification
+===========================================================
+
+Tool: Scyther v1.1.3
+Verification Model: Symbolic protocol analysis under the Dolev–Yao adversary model
+
+----------------------------------------
+Verification Parameters
+----------------------------------------
+
+Maximum protocol runs: 7
+Matching strategy: Typed matching
+
+----------------------------------------
+Advanced Verification Settings
+----------------------------------------
+
+Search pruning strategy: Find best attack
+Maximum patterns explored per claim: 15
+
+----------------------------------------
+Graph and Output Settings
+----------------------------------------
+
+Attack graph font size: 11
+
+----------------------------------------
+Verification Remarks
+----------------------------------------
+
+The above configuration was used to formally verify the proposed AuthChain-V2X
+authentication and key agreement protocol. The selected settings provide an
+effective balance between verification depth and computational efficiency for
+blockchain-assisted V2X communication environments.
+
+Typed matching ensures strict type consistency during message verification,
+thereby reducing false attack traces caused by type confusion. The bounded
+protocol runs enable systematic analysis of replay attacks, impersonation
+attempts, session-mixup attacks, and concurrency-based adversarial behaviour
+under realistic communication scenarios.
+
+The verification process validates important security properties of the protocol,
+including aliveness, authentication agreement, synchronisation, and session-key
+secrecy.
